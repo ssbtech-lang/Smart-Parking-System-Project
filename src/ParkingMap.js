@@ -296,6 +296,9 @@ export const ParkingMap = () => {
             totalAmount: totalAmount,
             slotId: selectedSlot?.slotId,
             duration: duration,
+            floorNumber: selectedSlot?.floorNumber,
+            building: selectedSlot?.building,
+             
           },
         });
       //  else {

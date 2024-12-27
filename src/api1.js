@@ -478,21 +478,22 @@ try {
 
 // API route to validate account details
 app.post("/api/validateAccount", async (req, res) => {
-const { paymentMethod, details } = req.body;
-
-try {
-  const account = await Account.findOne({ paymentMethod, accountDetails: details });
-  if (account) {
-    res.status(200).json({ success: true, message: "Payment successful" });
-  } else {
-    res.status(404).json({ success: false, message: "Account validation failed" });
+  const { paymentMethod, details } = req.body;
+  try {
+    console.log("Validating account:", paymentMethod, details);
+    const account = await Account.findOne({ paymentMethod, accountDetails: details });
+    console.log("Account object:", account);
+    if (account) {
+      res.status(200).json({ success: true, message: "Payment successful" });
+    } else {
+      console.log("Account not found");
+      res.status(404).json({ success: false, message: "Account validation failed" });
+    }
+  } catch (err) {
+    console.error("Error validating account:", err);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
   }
-} catch (err) {
-  console.error("Error validating account:", err.message);
-  res.status(500).json({ success: false, message: "Server error during validation" });
-}
 });
-
 
 // MongoDB schema and model definition
 const paymentSchema = new mongoose.Schema({
@@ -549,19 +550,14 @@ app.post("/api/savePayment", async (req, res) => {
 
 //location
 app.get('/api/parkingslots/:slotId', async (req, res) => {
-  const { slotId } = req.params;
-
-  
   try {
     // Query the parkingSlots collection for the slotId
-    const slot = await ParkingSlot.findOne({ slotId: { $regex: new RegExp(`^${slotId}$`, 'i') } });
-
+    const slot = await ParkingSlot.findOne({ slotId: req.params.slotId });
     if (!slot) {
-      console.error(`Slot with ID ${slotId} not found.`);
+      console.error(`Slot with ID ${req.params.slotId} not found.`);
       return res.status(404).json({ message: 'Slot not found' });
-      console.error(`Error fetching slot with ID ${slotId}:`, error);
     }
-
+ 
     // Return the latitude and longitude
     res.json({
       latitude: slot.latitude,
@@ -595,16 +591,24 @@ const paymentSchema1 = new mongoose.Schema({
 
 const Payment1 = mongoose.model('Payment1', paymentSchema1);
 // Update parking slot status to available
-app.get('/api/checkout', async (req, res) => {
+app.get('/api/update-slot-status', async (req, res) => {
   try {
     const slotId = req.query.slotId;
-    const response = await parkingSlotsCollection.updateOne({ slotId }, { $set: { status: 'Available' } });
-    res.json({ message: 'Parking slot checked out successfully' });
+    const updatedSlot = await ParkingSlot.findOneAndUpdate({ slotId }, { status: 'Available' }, { new: true });
+    if (updatedSlot) {
+      console.log(`Slot ${updatedSlot.slotId} status updated to available!`);
+      res.json({ success: true, message: 'Slot status updated successfully!' });
+    } else {
+      console.error(`Slot ${slotId} not found!`);
+      res.status(404).json({ error: 'Slot not found' });
+    }
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Failed to checkout parking slot' });
+    console.error('Error updating slot status:', error);
+    res.status(500).json({ error: 'Failed to update slot status' });
   }
 });
+
+
 
 
 //vehicle selector

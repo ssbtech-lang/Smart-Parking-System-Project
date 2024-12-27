@@ -407,7 +407,7 @@ import {
 export const  PaymentPage = () => {
   const navigate = useNavigate();
   const { state } = useLocation();
-  const { duration, totalAmount, slotId } = state || {};
+  const { duration, totalAmount, slotId, floorNumber, building } = state || {};
   const [selectedOption, setSelectedOption] = useState("");
   const [cardHolderName, setCardHolderName] = useState("");
   const [cardNumber, setCardNumber] = useState("");
@@ -433,7 +433,8 @@ export const  PaymentPage = () => {
     { id: "upi", label: "UPI" },
   ];
 
-  const qrCodeValue = '1654987666612875411';
+  //const qrCodeValue = '1654987666612875411';
+  const qrCodeValue = '';
 
   // Fetch account details based on payment method
   const handleOptionSelect = async (paymentMethod) => {
@@ -529,30 +530,31 @@ export const  PaymentPage = () => {
       alert("Payment details saved successfully!");
   
       // Validate payment details
-      const validateResponse = await fetch("http://localhost:3001/api/validateAccount", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          paymentMethod: selectedOption,
-          details: {
-            cardHolderName,
-            cardNumber,
-            expiryDate,
-            cvv,
-            paypalEmail,
-            upiId,
-          },
-        }),
-      });
+      // const validateResponse = await fetch("http://localhost:3001/api/validateAccount", {
+      //   method: "POST",
+      //   headers: {
+      //     "Content-Type": "application/json",
+      //   },
+      //   body: JSON.stringify({
+      //     paymentMethod: selectedOption,
+      //     details: {
+      //       cardHolderName,
+      //       cardNumber,
+      //       expiryDate,
+      //       cvv,
+      //       paypalEmail,
+      //       upiId,
+      //     },
+      //   }),
+      // });
   
-      const validateResult = await validateResponse.json();
+      // const validateResult = await validateResponse.json();
+      // console.log(validateResponse);
   
-      if (!validateResult.success) {
-        alert("Payment failed: " + validateResult.message);
-        return;
-      }
+      // if (!validateResult.success) {
+      //   alert("Payment failed: " + validateResult.message);
+      //   return;
+      // }
   
       alert("Payment successful!");
   
@@ -597,6 +599,22 @@ export const  PaymentPage = () => {
     console.log("Setting duration:", selectedDuration);
   };
   
+  const updateSlotStatus = async () => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/update-slot-status?slotId=${slotId}`, {
+        method: 'PUT',
+      });
+      const result = await response.json();
+      console.log(result);
+      if (result.success) {
+        console.log('Slot status updated successfully!');
+      } else {
+        console.error('Failed to update slot status:', result.message);
+      }
+    } catch (error) {
+      console.error('Error updating slot status:', error);
+    }
+  };
   
   useEffect(() => {
     console.log("paymentDetails:", paymentDetails);
@@ -614,12 +632,15 @@ export const  PaymentPage = () => {
       to_name: 'shivani',
       to_email: 'shivani18905@example.com',
       subject: 'Parking Duration Exceeded',
-      message: 'The parking duration has exceeded. Please take action.',
+      slot_id: slotId,
+    floor_number: floorNumber,
+    building: building,
+    cta_url: `http://192.168.140.218:3001/api/update-slot-status?slotId=${slotId}`,
     };
   
     emailjs.send(
       'service_aupgsok', 
-      'template_pvilp8l', 
+      'template_jt6u8k9', 
       templateParams, 
       '-MWalAz-c6Je-fdV7'
     ).then(
@@ -747,7 +768,8 @@ export const  PaymentPage = () => {
         value={qrCodeValue}
         size={256}
         style={{ margin: '0 auto', display: 'block' }}
-      />
+       />
+
     </div>
             <TextField
               fullWidth
